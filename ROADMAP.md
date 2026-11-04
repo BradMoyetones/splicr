@@ -21,6 +21,12 @@ What Sheetify did, in Rust, done right:
 - Settings saved atomically, logs, recent files.
 - Updater, per-user MSI, universal DMG, deb and AppImage, CI on the three systems.
 
+## 0.1.1: Updates (in progress)
+
+- The new-version banner on every screen, and a quiet "check for updates" in the status bar.
+- macOS and Linux (AppImage) update themselves in one click, as Windows does.
+- Every package signed with the project's ed25519 key, checked by the updater with its SHA-256.
+
 ## Phase 0.2: Better reading
 
 - Choosing the encoding, delimiter and header row of a CSV by hand when the guess is wrong, with a

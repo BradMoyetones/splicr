@@ -14,5 +14,5 @@ pub use grid::{GridData, GridResponse, data_grid};
 pub use theme::{Icon, Palette, Tone, icon, install, semibold};
 pub use widgets::{
     badge, banner, button, card, choice_card, danger_icon_button, drop_zone, icon_button, icon_label, list_item,
-    nav_item, primary_button, switch,
+    nav_item, primary_button, small_icon_button, switch,
 };

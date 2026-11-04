@@ -1,6 +1,6 @@
 [package]
 name = "splicr-update"
-description = "Checks GitHub Releases for a newer Splicr, downloads its installer, verifies and runs it"
+description = "Checks GitHub Releases for a newer Splicr, downloads its package, verifies its checksum and signature, and puts it in place"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,6 +12,7 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
+ed25519-dalek = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sha2 = { workspace = true }

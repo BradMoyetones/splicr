@@ -155,3 +155,5 @@
 	Source code	Código fuente
 	Settings and logs folder	Carpeta de ajustes y registros
 	{format} in {archive}	{format} en {archive}
+	The download isn't signed by Splicr's project; it was discarded, for your safety.	La descarga no está firmada por el proyecto Splicr; se descartó por tu seguridad.
+	The new version couldn't take the old one's place, which stays ({detail}).	La nueva versión no pudo reemplazar a la anterior, que se mantiene ({detail}).

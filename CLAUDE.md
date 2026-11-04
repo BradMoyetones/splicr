@@ -55,8 +55,15 @@ decisions behind them.
   `CFBundleIdentifier`, Linux's `.desktop` file and window class).
 - The updater reads only the version from GitHub and builds download URLs itself; keep it that
   way. Release asset names (`Splicr-<version>-x64.msi`, `Splicr-<version>-macos-universal.dmg`,
-  `Splicr-<version>-linux-x86_64.deb` and `.AppImage`, and their `.sha256`) are a contract between
-  `xtask dist`, the release workflow and `crates/update` (`splicr_update::package`).
+  `Splicr-<version>-linux-x86_64.deb` and `.AppImage`, each with its `.sha256` and `.sig`) are a
+  contract between `xtask dist`, `xtask sign`, the release workflow and `crates/update`
+  (`splicr_update::package`).
+- Packages are signed with the project's ed25519 key (secret `SPLICR_SIGNING_KEY`, public half
+  `splicr_update::PUBLIC_KEY`), and the updater installs nothing it can't verify. The private key
+  never enters the repository, a log or a conversation. Changing the key needs a release that
+  copies out there can still verify: never change `PUBLIC_KEY` and the secret in one go.
+- An update never leaves Splicr half-installed: the new copy is staged beside the old one, swapped
+  in by renames, and the old one restored if the swap fails (`crates/update/src/replace.rs`).
 - Releases are made by pushing a `v<version>` tag matching `Cargo.toml` (see README, Releasing).
 - A new crate goes in `crates/<name>`, is named `splicr-<name>`, inherits workspace lints and gets
   its layer in `xtask/src/layers.rs`; `cargo xtask layers` fails until it has one.
