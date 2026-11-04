@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=Splicr
+GenericName=Spreadsheet Combiner
+GenericName[es]=Combinador de hojas de cálculo
+Comment=View, combine and export spreadsheets and CSV files
+Comment[es]=Ve, combina y exporta hojas de cálculo y archivos CSV
+Exec=splicr %F
+TryExec=splicr
+Icon=io.github.bradmoyetones.splicr
+Terminal=false
+StartupNotify=true
+StartupWMClass=io.github.bradmoyetones.splicr
+Categories=Office;Spreadsheet;Utility;
+MimeType=text/csv;text/tab-separated-values;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;application/vnd.ms-excel.sheet.macroEnabled.12;application/vnd.ms-excel.sheet.binary.macroEnabled.12;application/vnd.ms-excel;application/vnd.oasis.opendocument.spreadsheet;application/zip;
+Keywords=csv;excel;xlsx;spreadsheet;merge;combine;split;hoja;cálculo;unir;combinar;

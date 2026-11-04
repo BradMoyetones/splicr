@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: check (${{ matrix.os }})
+    strategy:
+      # One system failing shouldn't hide how the others fare.
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      # Formatting and layering are the same everywhere: once is enough.
+      - if: runner.os == 'Linux'
+        run: cargo fmt --all --check
+      - if: runner.os == 'Linux'
+        run: cargo xtask layers
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - name: Build the installer
+        if: runner.os == 'Windows'
+        run: cargo xtask dist
+      - if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: splicr-installer
+          path: target/dist/
+      - name: Build the DMG
+        if: runner.os == 'macOS'
+        run: |
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          cargo xtask dist
+      - if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: splicr-dmg
+          path: target/dist/
+      - name: Build the deb and the AppImage
+        if: runner.os == 'Linux'
+        run: cargo xtask dist
+      - if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: splicr-linux
+          path: target/dist/
+
+  snapshots:
+    name: design snapshots
+    # Draws the design system with wgpu (Metal), light and dark, and keeps the pictures as the
+    # run's `design-snapshots` artifact, for reviewing a change of look.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test -p splicr-ui --features snapshots --test gallery
+        env:
+          UPDATE_SNAPSHOTS: "1"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-snapshots
+          path: crates/ui/tests/snapshots/
+          if-no-files-found: ignore

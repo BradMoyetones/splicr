@@ -1,0 +1,18 @@
+[package]
+name = "splicr-io"
+description = "Reads CSV, xlsx, xls, xlsb, ods and zip archives into Splicr's tables, and writes xlsx and CSV"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+splicr-core = { workspace = true }
+calamine = { workspace = true }
+rust_xlsxwriter = { workspace = true }
+zip = { workspace = true }

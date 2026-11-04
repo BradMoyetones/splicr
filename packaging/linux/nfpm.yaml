@@ -1,0 +1,53 @@
+# The .deb (nfpm: https://nfpm.goreleaser.com), after ArtCraft's craft-launcher, as Remapr's. cargo
+# xtask dist stages the file tree, writes its path for ${STAGE} (nfpm doesn't expand variables in
+# `src`) and sets VERSION and GLIBC_FLOOR (the build runner's glibc).
+name: splicr
+arch: amd64
+platform: linux
+version: ${VERSION}
+# semver: 0.2.0-rc.1 becomes 0.2.0~rc.1, so pre-releases sort before the release.
+version_schema: semver
+release: 1
+section: utils
+priority: optional
+maintainer: Brad Moyetones <brad.moyetones@gmail.com>
+homepage: https://github.com/BradMoyetones/splicr
+license: MIT
+description: |-
+  View, combine and export spreadsheets and CSV files.
+  Splicr opens CSV, xlsx, xls, xlsb and ods files, one or many at once, even
+  inside zip archives, shows them in a fast grid, and joins them into one
+  workbook, one stacked table, or a file each.
+
+# The binary links only glibc and libgcc_s. Windowing (X11, Wayland, xkbcommon) and OpenGL (EGL)
+# are loaded at run time, so the package tools can't find them: they are listed here.
+overrides:
+  deb:
+    depends:
+      - libc6 (>= ${GLIBC_FLOOR})
+      - libgcc-s1
+      - libxkbcommon0
+      - libxkbcommon-x11-0
+      - libwayland-client0
+      - libwayland-egl1
+      - libx11-6
+      - libx11-xcb1
+      - libxcb1
+      - libxcursor1
+      - libxi6
+      - libegl1
+    recommends:
+      # The file dialogs.
+      - xdg-desktop-portal
+
+contents:
+  - src: ${STAGE}/usr/bin/splicr
+    dst: /usr/bin/splicr
+    file_info: { mode: 0755 }
+  - src: ${STAGE}/usr/share/
+    dst: /usr/share/
+    type: tree
+
+scripts:
+  postinstall: packaging/linux/postinst.sh
+  postremove: packaging/linux/postinst.sh

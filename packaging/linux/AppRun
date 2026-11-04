@@ -1,0 +1,6 @@
+#!/bin/sh
+# The AppImage's entry point: Splicr, from inside the mounted image.
+# shortcut: unlike ArtCraft's AppRun, it doesn't copy the .desktop entry and icons into
+# $XDG_DATA_HOME, so Wayland may show a generic icon for the window; port theirs if users ask.
+HERE="$(dirname "$(readlink -f "$0")")"
+exec "$HERE/usr/bin/splicr" "$@"

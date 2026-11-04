@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Template, after ArtCraft's craft-launcher: `cargo xtask dist` substitutes @VERSION@ (full,
+     e.g. 0.7.0-rc.1) and @SHORT_VERSION@ (numeric X.Y.Z).
+     No document types yet: macOS hands files to an app through an Apple event, which eframe doesn't
+     pass on (ROADMAP, Later). A normal Dock app: LSUIElement stays unset. Never change
+     CFBundleIdentifier: macOS ties the app's settings and permissions to it. -->
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleDisplayName</key>
+  <string>Splicr</string>
+  <key>CFBundleName</key>
+  <string>Splicr</string>
+  <key>CFBundleExecutable</key>
+  <string>Splicr</string>
+  <key>CFBundleIdentifier</key>
+  <string>io.github.bradmoyetones.splicr</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleSignature</key>
+  <string>????</string>
+  <key>CFBundleShortVersionString</key>
+  <string>@SHORT_VERSION@</string>
+  <key>CFBundleVersion</key>
+  <string>@SHORT_VERSION@</string>
+  <key>SplicrVersion</key>
+  <string>@VERSION@</string>
+  <key>CFBundleIconFile</key>
+  <string>Splicr</string>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.productivity</string>
+  <!-- Must match MINIMUM_MACOS in xtask/src/macos.rs. -->
+  <key>LSMinimumSystemVersion</key>
+  <string>11.0</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSSupportsAutomaticGraphicsSwitching</key>
+  <true/>
+  <key>NSRequiresAquaSystemAppearance</key>
+  <false/>
+  <key>NSHumanReadableCopyright</key>
+  <string>Copyright © 2026 Brad Moyetones. MIT License.</string>
+</dict>
+</plist>

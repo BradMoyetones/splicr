@@ -1,0 +1,17 @@
+[package]
+name = "splicr-engine"
+description = "Runs Splicr's file work on a background thread: opening, exporting, progress and cancelling"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+splicr-core = { workspace = true }
+splicr-io = { workspace = true }
+log = { workspace = true }
