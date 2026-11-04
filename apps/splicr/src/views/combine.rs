@@ -11,7 +11,7 @@ use crate::app::{App, Export, group};
 use crate::dialogs::Dialog;
 use crate::i18n::{tr, trn};
 use crate::router::Route;
-use crate::views::{empty_state, section_title};
+use crate::views::{empty_state, fit_side_by_side, readable_width, section_title};
 use crate::workspace::TableKey;
 
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
@@ -30,7 +30,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         return;
     }
     egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
-        ui.set_max_width(980.0);
+        readable_width(ui, 980.0);
         mode(app, ui);
         ui.add_space(18.0);
         tables(app, ui);
@@ -55,13 +55,19 @@ fn mode(app: &mut App, ui: &mut egui::Ui) {
             tr!("Every table's rows one after another, columns matched by their header."),
         ),
     ];
-    ui.columns(options.len(), |columns| {
-        for (ui, (mode, glyph, title, detail)) in columns.iter_mut().zip(options) {
-            if choice_card(ui, current == mode, glyph, title, detail).clicked() {
-                app.workspace.export.mode = mode;
-            }
+    let mut pick = |ui: &mut egui::Ui, (mode, glyph, title, detail)| {
+        if choice_card(ui, current == mode, glyph, title, detail).clicked() {
+            app.workspace.export.mode = mode;
         }
-    });
+    };
+    if fit_side_by_side(ui, options.len(), 200.0) {
+        ui.columns(options.len(), |columns| columns.iter_mut().zip(options).for_each(|(ui, o)| pick(ui, o)));
+    } else {
+        for option in options {
+            pick(ui, option);
+            ui.add_space(2.0);
+        }
+    }
 }
 
 fn tables(app: &mut App, ui: &mut egui::Ui) {

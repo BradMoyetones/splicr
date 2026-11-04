@@ -7,12 +7,12 @@ use crate::app::App;
 use crate::config::{self, Theme};
 use crate::i18n::tr;
 use crate::updates;
-use crate::views::section_title;
+use crate::views::{fit_side_by_side, readable_width, section_title};
 
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let p = *Palette::of(ui);
     egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
-        ui.set_max_width(760.0);
+        readable_width(ui, 760.0);
         section_title(ui, tr!("Appearance"));
         ui.add_space(4.0);
         let themes = [
@@ -20,15 +20,21 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             (Theme::Light, icon::SUN, tr!("Light"), tr!("Always light.")),
             (Theme::Dark, icon::MOON, tr!("Dark"), tr!("Always dark.")),
         ];
-        ui.columns(themes.len(), |columns| {
-            for (ui, (theme, glyph, title, detail)) in columns.iter_mut().zip(themes) {
-                if choice_card(ui, app.config.theme == theme, glyph, title, detail).clicked() {
-                    app.config.theme = theme;
-                    app.apply_theme(ui.ctx());
-                    app.unsaved = true;
-                }
+        let mut pick = |ui: &mut egui::Ui, (theme, glyph, title, detail)| {
+            if choice_card(ui, app.config.theme == theme, glyph, title, detail).clicked() {
+                app.config.theme = theme;
+                app.apply_theme(ui.ctx());
+                app.unsaved = true;
             }
-        });
+        };
+        if fit_side_by_side(ui, themes.len(), 180.0) {
+            ui.columns(themes.len(), |columns| columns.iter_mut().zip(themes).for_each(|(ui, t)| pick(ui, t)));
+        } else {
+            for theme in themes {
+                pick(ui, theme);
+                ui.add_space(2.0);
+            }
+        }
         ui.add_space(8.0);
         ui.horizontal(|ui| {
             let mut compact = app.config.compact_sidebar;

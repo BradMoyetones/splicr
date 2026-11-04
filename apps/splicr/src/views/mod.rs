@@ -28,3 +28,17 @@ pub fn section_title(ui: &mut egui::Ui, text: &str) {
     let p = Palette::of(ui);
     ui.label(RichText::new(text).font(semibold(15.0)).color(p.text));
 }
+
+/// Keeps a screen's content to `max` points wide, or to all there is when the window is narrower,
+/// so lines stay readable on a wide window and nothing is cut on a narrow one.
+pub fn readable_width(ui: &mut egui::Ui, max: f32) {
+    let width = ui.available_width().min(max);
+    ui.set_max_width(width);
+}
+
+/// Whether `count` items of at least `min_width` points fit side by side; when they don't, screens
+/// put them one under another.
+pub fn fit_side_by_side(ui: &egui::Ui, count: usize, min_width: f32) -> bool {
+    let gaps = count.saturating_sub(1) as f32 * ui.spacing().item_spacing.x;
+    ui.available_width() >= count as f32 * min_width + gaps
+}
