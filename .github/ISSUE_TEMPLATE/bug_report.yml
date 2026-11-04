@@ -1,0 +1,56 @@
+name: Bug report
+description: Something doesn't work as it should. / Algo no funciona como debería.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. English or Spanish are both fine. For a security problem, don't use this form: see SECURITY.md.
+        Gracias por avisar. Puedes escribir en español o en inglés. Para un problema de seguridad, no uses este formulario: mira SECURITY.md.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened / Qué pasó
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Pasos para reproducirlo
+      placeholder: |
+        1. Open a CSV exported from …
+        2. Go to Combine, choose …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: file
+    attributes:
+      label: A file that shows it / Un archivo que lo muestre
+      description: Attach a small file that reproduces it, with private data removed. It is the most useful thing you can give.
+  - type: input
+    id: version
+    attributes:
+      label: Splicr version / Versión de Splicr
+      description: Shown at the bottom right of the window.
+      placeholder: v0.1.1
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: System / Sistema
+      options:
+        - Windows
+        - macOS
+        - Linux (deb)
+        - Linux (AppImage)
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Settings → "Settings and logs folder" → `logs/splicr.log`. Paste the end of it if something went wrong.
+      render: text
