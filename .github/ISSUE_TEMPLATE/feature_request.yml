@@ -1,0 +1,25 @@
+name: Idea or feature
+description: Something Splicr could do. / Algo que Splicr podría hacer.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check ROADMAP.md first: it may already be planned. English or Spanish are both fine.
+        Revisa primero ROADMAP.md: puede que ya esté planeado. Puedes escribir en español o en inglés.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you're trying to do / Qué intentas hacer
+      description: The task, in your own words, and what gets in the way today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How Splicr could help / Cómo podría ayudar Splicr
+  - type: textarea
+    id: files
+    attributes:
+      label: Example files / Archivos de ejemplo
+      description: Small files that show the case, with private data removed.

@@ -113,6 +113,11 @@ private half is the secret `SPLICR_SIGNING_KEY` (and an offline backup), its pub
 `splicr_update::PUBLIC_KEY`. Without the secret, a release fails rather than publish unsigned
 packages.
 
+## Contributing
+
+Issues and pull requests are welcome, in English or Spanish: [CONTRIBUTING.md](CONTRIBUTING.md)
+says how. Security problems go privately, as [SECURITY.md](SECURITY.md) explains.
+
 ## Licence
 
 MIT, see [LICENSE](LICENSE). Third-party parts keep their licences: [ATTRIBUTION.md](ATTRIBUTION.md).
