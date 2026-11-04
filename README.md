@@ -34,7 +34,9 @@ Splicr is the rewrite of Sheetify (Python and Qt), whose last version lives on t
 - Names sheets and files the way Excel and every system accept them, asks before replacing a file,
   and never leaves half a file behind, even when an export is cancelled.
 - Light, dark or the system's theme; English or Spanish, following the system.
-- Updates itself on Windows; on macOS and Linux it tells you when a new version is out.
+- Updates itself: on Windows (the installer, with no administrator), on macOS (the app in
+  Applications is replaced) and from an AppImage on Linux. Every package is checked against its
+  SHA-256 and the project's signature before it is used.
 
 Where it is going (relating tables, column types, filters, editing) is in
 [ROADMAP.md](ROADMAP.md), and the architecture behind it in [docs/VISION.md](docs/VISION.md).
@@ -100,10 +102,16 @@ the deb and the AppImage on Linux.
 
 ### Releasing
 
-1. Set the version in `Cargo.toml` (`[workspace.package]`) and commit it on `main`.
-2. Tag it and push the tag: `git tag v0.1.0 && git push origin v0.1.0`.
-3. The release workflow builds the three systems' packages and publishes them, with their SHA-256,
-   as a GitHub release. Installed copies find it there.
+1. Set the version in `Cargo.toml` (`[workspace.package]`), by a pull request into `main`.
+2. Tag `main` and push the tag: `git tag v0.1.1 && git push origin v0.1.1`.
+3. The release workflow builds the three systems' packages, signs them (`cargo xtask sign`, with
+   the repository secret `SPLICR_SIGNING_KEY`) and publishes them, each with its SHA-256 and
+   signature, as a GitHub release. Installed copies find it there.
+
+The signing key was made once with `cargo xtask keygen <folder outside the repository>`: its
+private half is the secret `SPLICR_SIGNING_KEY` (and an offline backup), its public half
+`splicr_update::PUBLIC_KEY`. Without the secret, a release fails rather than publish unsigned
+packages.
 
 ## Licence
 

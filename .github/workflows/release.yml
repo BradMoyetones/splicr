@@ -52,6 +52,13 @@ jobs:
           pattern: release-*
           path: dist
           merge-multiple: true
+      # Each package gets its ed25519 signature, which the updater checks: copies out there accept
+      # only packages signed with the project's key. `sign` refuses a key the updater doesn't have.
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Sign the packages
+        env:
+          SPLICR_SIGNING_KEY: ${{ secrets.SPLICR_SIGNING_KEY }}
+        run: cargo xtask sign dist/*
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}

@@ -1,14 +1,16 @@
 //! The "new version" banner: checks for releases in the background, then downloads, verifies and
-//! installs one when the user asks. From Remapr's: Splicr quits once the installer starts, and the
-//! installer (per user, so with no UAC prompt) starts the new one.
+//! installs one when the user asks. From Remapr's: once the package is in place (the MSI running on
+//! Windows, the new app swapped in on macOS, the new AppImage on Linux) Splicr quits and the new one
+//! starts. Copies that can't replace themselves (a deb, an app run from its DMG) offer the release
+//! page instead.
 
 use std::sync::Arc;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::time::Duration;
 
 use eframe::egui::{self, Align, Layout, RichText};
-use splicr_ui::{Palette, button, card, icon, icon_button, icon_label, primary_button, semibold};
-use splicr_update::{Error, Release, Source};
+use splicr_ui::{Palette, button, card, icon, icon_button, icon_label, primary_button, semibold, small_icon_button};
+use splicr_update::{Error, Installer, Release, Source};
 
 use crate::i18n::tr;
 
@@ -23,7 +25,7 @@ enum Event {
     CheckFailed(String),
     Progress(f32),
     Installing,
-    /// The installer is running: quit so it can replace Splicr's files.
+    /// The new version is in place, or its installer running: quit so it can start.
     QuitForInstaller,
     Failed(String),
 }
@@ -54,6 +56,9 @@ pub struct Updates {
     dismissed: Option<String>,
     events: Receiver<Event>,
     sender: Sender<Event>,
+    /// How this copy puts a new version in place; `None` when it can't, and the release page is
+    /// offered instead.
+    installer: Option<Installer>,
 }
 
 impl Updates {
@@ -81,7 +86,8 @@ impl Updates {
                 }
             });
         }
-        Self { state: State::Idle, source, checking: false, message: None, dismissed: None, events, sender }
+        let installer = splicr_update::installer();
+        Self { state: State::Idle, source, checking: false, message: None, dismissed: None, events, sender, installer }
     }
 
     /// Whether this copy updates at all: the installed app, or a debug build pointed at a folder.
@@ -97,6 +103,18 @@ impl Updates {
         if self.checking {
             ui.add(egui::Spinner::new().size(14.0));
         } else if button(ui, Some(icon::REFRESH), tr!("Check for updates")).clicked() {
+            self.check_now(ui.ctx());
+        }
+    }
+
+    /// The status bar's quiet version of [`Self::check_button`]: a small icon, as in Remapr's footer.
+    pub fn check_icon(&mut self, ui: &mut egui::Ui) {
+        if self.source.is_none() {
+            return;
+        }
+        if self.checking {
+            ui.add(egui::Spinner::new().size(12.0));
+        } else if small_icon_button(ui, icon::REFRESH, tr!("Check for updates")).clicked() {
             self.check_now(ui.ctx());
         }
     }
@@ -158,6 +176,7 @@ impl Updates {
     }
 
     fn start(&mut self, ctx: &egui::Context, release: Release) {
+        let Some(installer) = self.installer.clone() else { return };
         self.state = State::Downloading(release.clone(), 0.0);
         let (sender, ctx) = (self.sender.clone(), ctx.clone());
         let _ = std::thread::Builder::new().name("splicr-update".into()).spawn(move || {
@@ -166,9 +185,10 @@ impl Updates {
                 ctx.request_repaint();
             };
             let dir = std::env::temp_dir().join("Splicr").join("update");
-            let result = splicr_update::download(&release, &dir, |p| send(Event::Progress(p))).and_then(|msi| {
+            let result = splicr_update::download(&release, &dir, |p| send(Event::Progress(p))).and_then(|package| {
                 send(Event::Installing);
-                splicr_update::install(&msi)?;
+                splicr_update::install(&installer, &package)?;
+                let _ = std::fs::remove_file(&package);
                 send(Event::QuitForInstaller);
                 Ok(())
             });
@@ -182,6 +202,7 @@ impl Updates {
     /// The banner, when there is something to say.
     pub fn banner(&mut self, ui: &mut egui::Ui) {
         let p = Palette::of(ui);
+        let installs = self.installer.is_some();
         let mut action = None;
         match &self.state {
             State::Idle => {
@@ -207,7 +228,7 @@ impl Updates {
                             ui.spacing_mut().item_spacing.y = 0.0;
                             let title = tr!("New version available: v{version}", version = release.version);
                             ui.label(RichText::new(title).font(semibold(14.0)).color(p.text));
-                            let detail = if splicr_update::INSTALLS {
+                            let detail = if installs {
                                 tr!("You have v{version}. It installs itself and Splicr restarts.", version = VERSION)
                             } else if cfg!(target_os = "macos") {
                                 tr!(
@@ -226,7 +247,7 @@ impl Updates {
                             action = Some(Action::Notes(release.notes_url.clone()));
                         }
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            if !splicr_update::INSTALLS {
+                            if !installs {
                                 if primary_button(ui, Some(icon::DOWNLOAD), tr!("Download")).clicked() {
                                     action = Some(Action::Notes(release.notes_url.clone()));
                                 }
@@ -316,7 +337,13 @@ fn describe(error: &Error) -> String {
         Error::ChecksumMismatch => {
             tr!("The download doesn't match its published SHA-256; it was discarded.").to_owned()
         }
+        Error::BadSignature => {
+            tr!("The download isn't signed by Splicr's project; it was discarded, for your safety.").to_owned()
+        }
         Error::File(detail) => tr!("A file couldn't be saved ({detail}).", detail = detail),
+        Error::Replace(detail) => {
+            tr!("The new version couldn't take the old one's place, which stays ({detail}).", detail = detail)
+        }
         Error::Installer(Some(1602)) => tr!("The update was cancelled.").to_owned(),
         Error::Installer(Some(1618)) => {
             tr!("Another installation is running. Wait for it to finish and try again.").to_owned()

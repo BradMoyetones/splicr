@@ -465,6 +465,8 @@ impl App {
             }
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.label(RichText::new(concat!("v", env!("CARGO_PKG_VERSION"))).small().color(p.muted));
+                // Quiet, beside the version, as in Remapr's footer; what it finds shows above the screen.
+                self.updates.check_icon(ui);
             });
         });
     }

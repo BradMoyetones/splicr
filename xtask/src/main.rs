@@ -9,11 +9,13 @@
 //!   newer). On macOS `Splicr-<version>-macos-universal.dmg` ([`macos`]); on Linux
 //!   `Splicr-<version>-linux-x86_64.deb` and `.AppImage` ([`linux`]).
 //! - `layers`: fails when a crate depends on one it shouldn't (see [`layers`]). CI runs it.
+//! - `keygen <folder>` and `sign <files…>`: the packages' signatures (see [`signing`]).
 
 mod icns;
 mod layers;
 mod linux;
 mod macos;
+mod signing;
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -52,7 +54,12 @@ fn main() -> Result<(), String> {
         Some("icons") => icons(),
         Some("dist") => dist(),
         Some("layers") => layers::run(&root()),
-        _ => Err("usage: cargo xtask <icons|dist|layers>".into()),
+        Some("keygen") => match std::env::args().nth(2) {
+            Some(folder) => signing::keygen(Path::new(&folder)),
+            None => Err("usage: cargo xtask keygen <folder outside the repository>".into()),
+        },
+        Some("sign") => signing::sign(&std::env::args().skip(2).collect::<Vec<_>>()),
+        _ => Err("usage: cargo xtask <icons|dist|layers|keygen|sign>".into()),
     }
 }
 

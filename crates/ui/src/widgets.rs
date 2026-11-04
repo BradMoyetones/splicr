@@ -13,16 +13,22 @@ use crate::theme::{Icon, SEMIBOLD, Tone};
 /// A square, frameless button showing one [`Icon`](crate::icon). `label` is its tooltip and
 /// accessible name.
 pub fn icon_button(ui: &mut Ui, icon: Icon, label: &str) -> Response {
-    icon_button_toned(ui, icon, label, false)
+    icon_button_toned(ui, icon, label, false, 32.0)
+}
+
+/// A quieter [`icon_button`], 22 points: for a status bar, beside small text.
+pub fn small_icon_button(ui: &mut Ui, icon: Icon, label: &str) -> Response {
+    icon_button_toned(ui, icon, label, false, 22.0)
 }
 
 /// An [`icon_button`] for an action that deletes something: red, and redder on hover.
 pub fn danger_icon_button(ui: &mut Ui, icon: Icon, label: &str) -> Response {
-    icon_button_toned(ui, icon, label, true)
+    icon_button_toned(ui, icon, label, true, 32.0)
 }
 
-fn icon_button_toned(ui: &mut Ui, icon: Icon, label: &str, danger: bool) -> Response {
-    let (rect, response) = ui.allocate_exact_size(egui::Vec2::splat(32.0), Sense::click());
+fn icon_button_toned(ui: &mut Ui, icon: Icon, label: &str, danger: bool, size: f32) -> Response {
+    let (rect, response) = ui.allocate_exact_size(egui::Vec2::splat(size), Sense::click());
+    let radius = CornerRadius::same(if size < 32.0 { 6 } else { 8 });
     let p = Palette::of(ui);
     if ui.is_rect_visible(rect) {
         let hovered = response.hovered() || response.has_focus();
@@ -32,13 +38,13 @@ fn icon_button_toned(ui: &mut Ui, icon: Icon, label: &str, danger: bool) -> Resp
             (p.surface_hover, p.accent, p.muted, p.text)
         };
         if hovered {
-            ui.painter().rect_filled(rect, CornerRadius::same(8), hover_fill);
+            ui.painter().rect_filled(rect, radius, hover_fill);
         }
         if response.has_focus() {
-            ui.painter().rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.5, ring), StrokeKind::Inside);
+            ui.painter().rect_stroke(rect, radius, Stroke::new(1.5, ring), StrokeKind::Inside);
         }
         let color = if hovered { active } else { idle };
-        paint_icon(ui, ui.painter(), icon, rect.center(), 16.0, color);
+        paint_icon(ui, ui.painter(), icon, rect.center(), size / 2.0, color);
     }
     response.widget_info(|| WidgetInfo::labeled(Role::Button, ui.is_enabled(), label));
     response.on_hover_cursor(CursorIcon::PointingHand).on_hover_text(label)

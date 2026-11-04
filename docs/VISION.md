@@ -117,8 +117,15 @@ Shortcuts: `Cmd/Ctrl+O` opens files, `Cmd/Ctrl+1…3` the sections, `Cmd/Ctrl+,`
 5. **An export never destroys anything.** Names are made valid and unique (`ventas (2)`), files
    that would be replaced are listed and confirmed first, and each file is written beside its
    place and moved there once complete. A failed or cancelled export leaves no half file.
-6. **Per-user installs.** The Windows MSI installs into `%LOCALAPPDATA%\Programs\Splicr`: no
-   administrator rights to install or to update. The updater (Remapr's) downloads the MSI, checks
-   its SHA-256, starts it and quits; the MSI starts the new Splicr.
+6. **Per-user installs, self-updates everywhere they can be.** The Windows MSI installs into
+   `%LOCALAPPDATA%\Programs\Splicr`: no administrator rights to install or to update. On macOS
+   the updater swaps the `.app` for the one in the new DMG, as Tauri's does, and on Linux the
+   AppImage for the new one; then the new Splicr starts. A deb, or an app run from its DMG or a
+   folder it can't write to, gets the release page instead.
 7. **A fresh version line.** The Python app's releases (v1.0.0 to v1.2.1) had no updater, so no
    installed copy depends on them. Splicr starts at 0.1.0.
+8. **Trust comes from the project's signature, not the host.** Every package carries an ed25519
+   signature made in the release workflow with the project's key; the updater checks it, and the
+   SHA-256, before using anything. A Developer ID isn't needed for updates: a package the app
+   downloads itself carries no quarantine, and the signature proves where it came from. Apple's
+   signing and notarization still matter for the first install (ROADMAP, Later).

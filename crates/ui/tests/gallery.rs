@@ -12,7 +12,7 @@ use eframe::egui::{self, Layout, RichText, Theme};
 use egui_kittest::Harness;
 use splicr_ui::{
     GridData, Palette, Tone, badge, banner, button, card, choice_card, danger_icon_button, data_grid, drop_zone, icon,
-    icon_button, icon_label, nav_item, primary_button, semibold, switch,
+    icon_button, icon_label, nav_item, primary_button, semibold, small_icon_button, switch,
 };
 
 struct Sample;
@@ -93,6 +93,7 @@ fn gallery(ui: &mut egui::Ui) {
                 switch(ui, &mut false, "Apagado");
                 ui.add_enabled_ui(false, |ui| primary_button(ui, Some(icon::DOWNLOAD), "Deshabilitado"));
                 ui.label(RichText::new("Áé ñ ¿¡ · « » € → ×").color(p.text));
+                small_icon_button(ui, icon::REFRESH, "Buscar actualizaciones");
             });
         });
         ui.horizontal_wrapped(|ui| {

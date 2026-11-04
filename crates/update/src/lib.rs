@@ -1,44 +1,54 @@
-//! Splicr's updater, Remapr's own: finds a newer release on GitHub, downloads its installer, checks
-//! it against the published SHA-256 and runs it. The installer installs over the running Splicr
-//! (same folder, same settings) and starts it again; being per user, it asks for no administrator.
-//! On macOS and Linux it only finds the new package: the app opens its release page, as ArtCraft's
-//! updater does for copies that can't replace themselves.
+//! Splicr's updater, after Remapr's: finds a newer release on GitHub, downloads this system's
+//! package, checks it against the published SHA-256 and the project's ed25519 signature, and puts it
+//! in place ([`install`]):
+//!
+//! - Windows: the per-user MSI installs over the running Splicr and starts it again, with no
+//!   administrator.
+//! - macOS: the new `Splicr.app` is copied out of the DMG and swapped for the one running, as
+//!   Tauri's updater does. No Developer ID is needed: the package is trusted by the project's own
+//!   signature, and a download that no browser made carries no quarantine for Gatekeeper.
+//! - Linux: an AppImage is replaced by the new one. The deb needs root: the app opens the release
+//!   page instead, as for a copy that can't replace itself (one run from the DMG, a folder without
+//!   write access).
 //!
 //! Only the version is read from GitHub's answer; download addresses are built from it, so an
-//! unexpected response can't point the updater anywhere else.
+//! unexpected response can't point the updater anywhere else. The signature makes the hosting
+//! irrelevant: a package changed on GitHub, checksum and all, is still refused.
 //!
-//! The network goes through curl.exe, which ships with Windows 10 and later (as schtasks.exe and
-//! msiexec.exe do), so Splicr carries no TLS stack of its own. macOS and most Linux systems ship
-//! curl too.
+//! The network goes through curl, which Windows 10 and later, macOS and most Linux systems ship, so
+//! Splicr carries no TLS stack of its own.
 //! shortcut: curl.exe ignores the system proxy settings (it honours `HTTPS_PROXY`); move to WinHTTP if
 //! users behind a proxy report failed checks.
 //!
 //! Errors are an [`Error`]; the app puts them into words, in the user's language.
 
+mod replace;
+
 use std::io::Read;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, Stdio};
+use std::process::{Command, Stdio};
 use std::time::Duration;
 
+use ed25519_dalek::{Signature, VerifyingKey};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
+pub use replace::{Installer, install, installer};
+
 pub const REPO: &str = "BradMoyetones/splicr";
-/// Whether this system's package installs itself. A DMG needs the user to drag the app; replacing it
-/// from here would need a Developer ID to check the new bundle against (ROADMAP, Later). On Linux
-/// the release page offers the AppImage and the deb.
-// shortcut: ArtCraft's updater replaces an AppImage in place and installs a deb through pkexec;
-// port that when Linux users ask for one-click updates.
-pub const INSTALLS: bool = cfg!(windows);
+/// The project's ed25519 public key, in hex: packages are signed with its private half in the
+/// release workflow (`cargo xtask sign`, secret `SPLICR_SIGNING_KEY`). Never change it without a
+/// release that carries both: copies out there only accept packages signed with the key they have.
+pub const PUBLIC_KEY: &str = "66ab00aa9da39a987f3e199fa729f186dba90592c7c93dd8bb5974715b6d5867";
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 /// What went wrong, for the app to put into words.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Error {
-    /// No connection, or curl.exe couldn't run; curl's own words, possibly empty.
+    /// No connection, or curl couldn't run; curl's own words, possibly empty.
     Network(String),
     /// GitHub answered something unexpected, or refused (its message, like a rate limit).
     GitHub(String),
@@ -46,10 +56,14 @@ pub enum Error {
     UnreadableChecksum,
     /// The download doesn't match the published checksum; it was deleted.
     ChecksumMismatch,
+    /// The download isn't signed with the project's key; it was deleted.
+    BadSignature,
     /// A file couldn't be written or read; the system's words.
     File(String),
     /// Windows Installer's exit code, or `None` when it couldn't start or was interrupted.
     Installer(Option<i32>),
+    /// The new app couldn't be put in place of the old one, which stays; the system's words.
+    Replace(String),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -59,6 +73,9 @@ pub struct Release {
     pub notes_url: String,
     url: String,
     sha256_url: String,
+    sig_url: String,
+    /// The public key the package must be signed with, in hex.
+    key: String,
     /// Bytes, for the download's progress.
     size: u64,
 }
@@ -85,6 +102,7 @@ pub fn release_page(version: &str) -> String {
 pub struct Source {
     latest: String,
     downloads: String,
+    key: String,
 }
 
 impl Source {
@@ -92,6 +110,7 @@ impl Source {
         Self {
             latest: format!("https://api.github.com/repos/{REPO}/releases/latest"),
             downloads: format!("https://github.com/{REPO}/releases/download"),
+            key: PUBLIC_KEY.to_owned(),
         }
     }
 
@@ -101,10 +120,18 @@ impl Source {
         let path = dir.display().to_string().replace('\\', "/").replace(' ', "%20");
         // `C:/…` on Windows, `/…` elsewhere: either way one slash after the empty host.
         let url = format!("file:///{}", path.trim_start_matches('/'));
-        Self { latest: format!("{url}/latest.json"), downloads: url }
+        Self { latest: format!("{url}/latest.json"), downloads: url, key: PUBLIC_KEY.to_owned() }
     }
 
-    /// The latest release, if it is newer than `current` and this system's package is uploaded.
+    /// Packages from this source must be signed with `key` (hex) rather than [`PUBLIC_KEY`]: for
+    /// tests, and for a test folder signed with a test key.
+    pub fn with_key(mut self, key: &str) -> Self {
+        key.clone_into(&mut self.key);
+        self
+    }
+
+    /// The latest release, if it is newer than `current` and this system's package is uploaded
+    /// with its checksum and signature.
     pub fn check(&self, current: &str) -> Result<Option<Release>, Error> {
         // No `-f`: GitHub answers "no release yet" with a 404 whose JSON says so.
         let body = curl(&["-sSL", "--max-time", "20", "-H", "Accept: application/vnd.github+json", &self.latest])?;
@@ -137,15 +164,22 @@ impl Source {
             return Err(Error::GitHub(format!("unexpected version {tag}")));
         };
         let package = package(&version);
-        let sha256 = format!("{package}.sha256");
+        let (sha256, sig) = (format!("{package}.sha256"), format!("{package}.sig"));
         let size = latest.assets.iter().find(|a| a.name == package).map(|a| a.size);
-        let has_sha256 = latest.assets.iter().any(|a| a.name == sha256);
-        // A release whose files are still uploading is picked up on a later check.
-        let (true, Some(size), true) = (new > old, size, has_sha256) else { return Ok(None) };
+        let has = |name: &str| latest.assets.iter().any(|a| a.name == name);
+        // A release whose files are still uploading is picked up on a later check; one without a
+        // signature, or a copy without a key to check it with, is never offered.
+        let (true, Some(size), true, true, false) = (new > old, size, has(&sha256), has(&sig), self.key.is_empty())
+        else {
+            return Ok(None);
+        };
+        let at = |file: &str| format!("{}/v{version}/{file}", self.downloads);
         Ok(Some(Release {
             notes_url: release_page(&version),
-            url: format!("{}/v{version}/{package}", self.downloads),
-            sha256_url: format!("{}/v{version}/{sha256}", self.downloads),
+            url: at(&package),
+            sha256_url: at(&sha256),
+            sig_url: at(&sig),
+            key: self.key.clone(),
             size,
             version,
         }))
@@ -160,8 +194,8 @@ fn parse_version(v: &str) -> Option<(u64, u64, u64)> {
     parts.next().is_none().then_some(version)
 }
 
-/// Downloads `release`'s installer into `dir`, calling `progress` with 0..=1, and checks it against
-/// the published SHA-256. A file that doesn't match is deleted, never run.
+/// Downloads `release`'s package into `dir`, calling `progress` with 0..=1, and checks it against
+/// the published SHA-256 and signature. A file that doesn't match is deleted, never used.
 pub fn download(release: &Release, dir: &Path, progress: impl Fn(f32)) -> Result<PathBuf, Error> {
     std::fs::create_dir_all(dir).map_err(|e| Error::File(e.to_string()))?;
     let sums = curl(&["-sSfL", "--max-time", "30", &release.sha256_url])?;
@@ -171,6 +205,7 @@ pub fn download(release: &Release, dir: &Path, progress: impl Fn(f32)) -> Result
         .map(str::to_ascii_lowercase)
         .filter(|h| h.len() == 64 && h.bytes().all(|b| b.is_ascii_hexdigit()))
         .ok_or(Error::UnreadableChecksum)?;
+    let signature = curl(&["-sSfL", "--max-time", "30", &release.sig_url])?;
 
     let file = dir.join(package(&release.version));
     let _ = std::fs::remove_file(&file);
@@ -197,22 +232,38 @@ pub fn download(release: &Release, dir: &Path, progress: impl Fn(f32)) -> Result
     progress(1.0);
 
     let bytes = std::fs::read(&file).map_err(|e| Error::File(e.to_string()))?;
-    if sha256(&bytes) != expected {
+    let checked = if sha256(&bytes) != expected {
+        Err(Error::ChecksumMismatch)
+    } else if !verify(&bytes, &String::from_utf8_lossy(&signature), &release.key) {
+        Err(Error::BadSignature)
+    } else {
+        Ok(file.clone())
+    };
+    if checked.is_err() {
         let _ = std::fs::remove_file(&file);
-        return Err(Error::ChecksumMismatch);
     }
-    Ok(file)
+    checked
 }
 
-/// Starts Windows Installer on `msi` with a progress bar and no questions, logging beside the file.
-pub fn install(msi: &Path) -> Result<Child, Error> {
-    Command::new(system32("msiexec.exe"))
-        .arg("/i")
-        .arg(msi)
-        .args(["/passive", "/norestart", "/l*v"])
-        .arg(msi.with_extension("log"))
-        .spawn()
-        .map_err(|_| Error::Installer(None))
+/// Whether `signature` (hex, as `cargo xtask sign` writes it) is `key`'s (hex) over `bytes`.
+pub fn verify(bytes: &[u8], signature: &str, key: &str) -> bool {
+    let (Some(signature), Some(key)) = (hex::<64>(signature.trim()), hex::<32>(key.trim())) else { return false };
+    let Ok(key) = VerifyingKey::from_bytes(&key) else { return false };
+    key.verify_strict(bytes, &Signature::from_bytes(&signature)).is_ok()
+}
+
+/// Exactly `N` bytes from hex; `None` for anything else.
+fn hex<const N: usize>(text: &str) -> Option<[u8; N]> {
+    let text = text.as_bytes();
+    if text.len() != 2 * N {
+        return None;
+    }
+    let digit = |c: u8| (c as char).to_digit(16).map(|d| d as u8);
+    let mut out = [0u8; N];
+    for (byte, [high, low]) in out.iter_mut().zip(text.as_chunks::<2>().0) {
+        *byte = digit(*high)? << 4 | digit(*low)?;
+    }
+    Some(out)
 }
 
 /// Windows Installer's exit code as a result: success (also "restart needed") or [`Error::Installer`].
@@ -246,6 +297,7 @@ fn command(args: &[&str]) -> Command {
 }
 
 /// The full path: never a same-named program from the working folder.
+#[cfg(windows)]
 fn system32(program: &str) -> PathBuf {
     PathBuf::from(std::env::var_os("SystemRoot").unwrap_or_else(|| r"C:\Windows".into())).join("System32").join(program)
 }
@@ -256,7 +308,26 @@ fn sha256(bytes: &[u8]) -> String {
 
 #[cfg(test)]
 mod tests {
+    use ed25519_dalek::{Signer, SigningKey};
+
     use super::*;
+
+    /// A test key: never the project's.
+    fn signing_key() -> SigningKey {
+        SigningKey::from_bytes(&[7; 32])
+    }
+
+    fn hex_of(bytes: &[u8]) -> String {
+        bytes.iter().map(|b| format!("{b:02x}")).collect()
+    }
+
+    fn public_key() -> String {
+        hex_of(signing_key().verifying_key().as_bytes())
+    }
+
+    fn sign(bytes: &[u8]) -> String {
+        hex_of(&signing_key().sign(bytes).to_bytes())
+    }
 
     fn latest(tag: &str, assets: &[(&str, u64)]) -> String {
         let assets: Vec<String> = assets.iter().map(|(n, s)| format!(r#"{{"name":"{n}","size":{s}}}"#)).collect();
@@ -271,20 +342,37 @@ mod tests {
     }
 
     #[test]
-    fn only_a_newer_complete_release_is_offered() {
-        let source = Source::github();
-        let (package, sums) = (package("0.3.0"), format!("{}.sha256", package("0.3.0")));
-        let full = [(package.as_str(), 10), (sums.as_str(), 90)];
+    fn signatures_are_checked() {
+        let data = b"Splicr-0.2.0";
+        assert!(verify(data, &sign(data), &public_key()));
+        assert!(!verify(b"Splicr-0.2.1", &sign(data), &public_key()), "another file");
+        let other = hex_of(SigningKey::from_bytes(&[8; 32]).verifying_key().as_bytes());
+        assert!(!verify(data, &sign(data), &other), "another key");
+        assert!(!verify(data, "not hex", &public_key()));
+        assert!(!verify(data, &sign(data), ""), "no key");
+        assert_eq!(hex::<2>("0aFf"), Some([0x0a, 0xff]));
+        assert_eq!(hex::<2>("0aF"), None);
+    }
+
+    #[test]
+    fn only_a_newer_complete_signed_release_is_offered() {
+        let source = Source::github().with_key(&public_key());
+        let package = package("0.3.0");
+        let (sums, sig) = (format!("{package}.sha256"), format!("{package}.sig"));
+        let full = [(package.as_str(), 10), (sums.as_str(), 90), (sig.as_str(), 128)];
         let found = source.parse(latest("v0.3.0", &full).as_bytes(), "0.2.9").unwrap().unwrap();
         assert_eq!(found.version, "0.3.0");
         assert_eq!(found.url, format!("https://github.com/BradMoyetones/splicr/releases/download/v0.3.0/{package}"));
+        assert_eq!(found.notes_url, "https://github.com/BradMoyetones/splicr/releases/tag/v0.3.0");
         // Another system's package alone isn't an update for this one.
         let other = [("Splicr-0.3.0-linux-x64.AppImage", 10), ("Splicr-0.3.0-linux-x64.AppImage.sha256", 90)];
         assert_eq!(source.parse(latest("v0.3.0", &other).as_bytes(), "0.2.0").unwrap(), None);
-        assert_eq!(found.notes_url, "https://github.com/BradMoyetones/splicr/releases/tag/v0.3.0");
         assert_eq!(source.parse(latest("v0.3.0", &full).as_bytes(), "0.3.0").unwrap(), None);
-        // Still uploading: no checksum yet.
-        assert_eq!(source.parse(latest("v0.3.0", &full[..1]).as_bytes(), "0.2.0").unwrap(), None);
+        // Still uploading, or unsigned.
+        assert_eq!(source.parse(latest("v0.3.0", &full[..2]).as_bytes(), "0.2.0").unwrap(), None);
+        // A copy with no key offers nothing.
+        let keyless = Source::github().with_key("");
+        assert_eq!(keyless.parse(latest("v0.3.0", &full).as_bytes(), "0.2.0").unwrap(), None);
         // No release at all, or GitHub refusing.
         assert_eq!(source.parse(br#"{"message":"Not Found"}"#, "0.2.0").unwrap(), None);
         assert!(source.parse(br#"{"message":"API rate limit exceeded"}"#, "0.2.0").is_err());
@@ -297,29 +385,40 @@ mod tests {
         assert_eq!(install_result(Some(1602)), Err(Error::Installer(Some(1602))));
     }
 
-    /// The whole check and download through curl.exe, against files standing in for GitHub.
+    /// The whole check and download through curl, against files standing in for GitHub.
     #[test]
-    fn downloads_and_verifies_the_installer() {
+    fn downloads_and_verifies_the_package() {
         let dir = std::env::temp_dir().join(format!("splicr-update-test-{}", std::process::id()));
         let release_dir = dir.join("v0.9.0");
         std::fs::create_dir_all(&release_dir).unwrap();
-        let (name, sums_name) = (package("0.9.0"), format!("{}.sha256", package("0.9.0")));
-        let msi = b"not really a package".repeat(1000);
-        std::fs::write(release_dir.join(&name), &msi).unwrap();
-        std::fs::write(release_dir.join(&sums_name), format!("{}  {name}\n", sha256(&msi))).unwrap();
-        let assets = [(name.as_str(), msi.len() as u64), (sums_name.as_str(), 90)];
+        let name = package("0.9.0");
+        let (sums_name, sig_name) = (format!("{name}.sha256"), format!("{name}.sig"));
+        let data = b"not really a package".repeat(1000);
+        std::fs::write(release_dir.join(&name), &data).unwrap();
+        std::fs::write(release_dir.join(&sums_name), format!("{}  {name}\n", sha256(&data))).unwrap();
+        std::fs::write(release_dir.join(&sig_name), sign(&data)).unwrap();
+        let assets = [(name.as_str(), data.len() as u64), (sums_name.as_str(), 90), (sig_name.as_str(), 128)];
         std::fs::write(dir.join("latest.json"), latest("v0.9.0", &assets)).unwrap();
 
-        let release = Source::local(&dir).check("0.1.0").unwrap().expect("a newer release");
+        let source = Source::local(&dir).with_key(&public_key());
+        let release = source.check("0.1.0").unwrap().expect("a newer release");
         let last = std::cell::Cell::new(0.0);
         let path = download(&release, &dir.join("out"), |p| last.set(p)).unwrap();
-        assert_eq!(std::fs::read(&path).unwrap(), msi);
+        assert_eq!(std::fs::read(&path).unwrap(), data);
         assert_eq!(last.get(), 1.0);
 
-        // A file that doesn't match its checksum is refused and removed.
-        std::fs::write(release_dir.join(&name), b"tampered").unwrap();
-        assert!(download(&release, &dir.join("out"), |_| {}).is_err());
+        // Signed with another key: refused and removed, though its checksum matches.
+        let forged = SigningKey::from_bytes(&[9; 32]).sign(&data).to_bytes();
+        std::fs::write(release_dir.join(&sig_name), hex_of(&forged)).unwrap();
+        assert_eq!(download(&release, &dir.join("out"), |_| {}), Err(Error::BadSignature));
         assert!(!path.exists());
+
+        // Changed, checksum and all: still refused by its signature.
+        let tampered = b"tampered".to_vec();
+        std::fs::write(release_dir.join(&name), &tampered).unwrap();
+        std::fs::write(release_dir.join(&sums_name), format!("{}  {name}\n", sha256(&tampered))).unwrap();
+        std::fs::write(release_dir.join(&sig_name), sign(&data)).unwrap();
+        assert_eq!(download(&release, &dir.join("out"), |_| {}), Err(Error::BadSignature));
         let _ = std::fs::remove_dir_all(dir);
     }
 }
