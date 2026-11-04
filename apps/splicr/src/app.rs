@@ -362,19 +362,9 @@ impl App {
             Route::Combine => (tr!("Combine"), tr!("Join tables into the files you need")),
             Route::Settings => (tr!("Settings"), tr!("How Splicr looks and updates")),
         };
-        ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-            if self.router.can_go_back() && icon_button(ui, icon::BACK, tr!("Back")).clicked() {
-                self.router.back();
-            }
-            // One label of two lines, not a vertical group: a centred row centres single widgets,
-            // while a group would start at the top.
-            let mut job = egui::text::LayoutJob::default();
-            let line = |font, color| egui::TextFormat { font_id: font, color, ..Default::default() };
-            job.append(title, 0.0, line(semibold(20.0), p.text));
-            job.append("\n", 0.0, line(egui::FontId::proportional(6.0), p.text));
-            job.append(subtitle, 0.0, line(egui::FontId::proportional(14.0), p.muted));
-            ui.add(egui::Label::new(job).selectable(false));
-            ui.with_layout(Layout::right_to_left(Align::Center), |ui| match self.router.current() {
+        // The actions first, from the right; the title takes what is left and is cut there.
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            match self.router.current() {
                 Route::Data(_) if self.workspace.table_count() > 0 => {
                     if splicr_ui::primary_button(ui, Some(icon::COMBINE), tr!("Combine")).clicked() {
                         self.router.go(Route::Combine);
@@ -387,6 +377,24 @@ impl App {
                     self.dialog = Some(Dialog::Open);
                 }
                 _ => {}
+            }
+            ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                if self.router.can_go_back() && icon_button(ui, icon::BACK, tr!("Back")).clicked() {
+                    self.router.back();
+                }
+                let width = ui.available_width().max(0.0);
+                let line = |text: &str, font, color| {
+                    let mut job = egui::text::LayoutJob::simple_singleline(text.to_owned(), font, color);
+                    job.wrap = egui::text::TextWrapping::truncate_at_width(width);
+                    ui.painter().layout_job(job)
+                };
+                let title = line(title, semibold(20.0), p.text);
+                let subtitle = line(subtitle, egui::FontId::proportional(14.0), p.muted);
+                let height = title.size().y + subtitle.size().y;
+                let (rect, _) = ui.allocate_exact_size(vec2(width, height), egui::Sense::hover());
+                let title_h = title.size().y;
+                ui.painter().galley(rect.min, title, p.text);
+                ui.painter().galley(pos2(rect.left(), rect.top() + title_h), subtitle, p.muted);
             });
         });
     }

@@ -325,15 +325,26 @@ pub fn drop_zone(ui: &mut Ui, hovered: bool, icon: Icon, title: &str, detail: &s
         let (fill, line) = if active { (p.accent_soft, p.accent) } else { (p.surface, p.control) };
         ui.painter().rect_filled(rect, CornerRadius::same(12), fill);
         dashed_rect(ui, rect.shrink(1.0), Stroke::new(1.5, line));
-        let center = rect.center();
+        // The texts wrap, centred, to the zone's width: on a narrow window they take more lines.
+        let wrap = (rect.width() - 48.0).max(80.0);
+        let centred = |text: &str, font: FontId, color: Color32| {
+            let mut job = egui::text::LayoutJob::simple(text.to_owned(), font, color, wrap);
+            job.halign = egui::Align::Center;
+            ui.painter().layout_job(job)
+        };
+        let title = centred(title, FontId::new(15.0, FontFamily::Name(SEMIBOLD.into())), p.text);
+        let detail = centred(detail, FontId::proportional(13.0), p.muted);
+        let block = 32.0 + 10.0 + title.size().y + 4.0 + detail.size().y;
+        let (x, mut y) = (rect.center().x, rect.center().y - block / 2.0);
         let ink = if active { p.accent } else { p.muted };
-        paint_icon(ui, ui.painter(), icon, center - vec2(0.0, 30.0), 32.0, ink);
-        let painter = ui.painter();
-        let title_font = FontId::new(15.0, FontFamily::Name(SEMIBOLD.into()));
-        painter.text(center + vec2(0.0, 6.0), Align2::CENTER_CENTER, title, title_font, p.text);
-        painter.text(center + vec2(0.0, 28.0), Align2::CENTER_CENTER, detail, FontId::proportional(13.0), p.muted);
+        paint_icon(ui, ui.painter(), icon, egui::pos2(x, y + 16.0), 32.0, ink);
+        y += 42.0;
+        let title_h = title.size().y;
+        ui.painter().galley(egui::pos2(x, y), title, p.text);
+        ui.painter().galley(egui::pos2(x, y + title_h + 4.0), detail, p.muted);
     }
-    response.widget_info(|| WidgetInfo::labeled(Role::Button, ui.is_enabled(), title));
+    let name = title.to_owned();
+    response.widget_info(|| WidgetInfo::labeled(Role::Button, ui.is_enabled(), &name));
     response.on_hover_cursor(CursorIcon::PointingHand)
 }
 

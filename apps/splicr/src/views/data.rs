@@ -52,12 +52,23 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, key: Option<TableKey>) {
         .show(ui, |ui| {
             let Some(key) = key else { return };
             let Some(table) = app.workspace.table(key).cloned() else { return };
-            ui.horizontal(|ui| {
-                ui.label(RichText::new(&table.name).font(semibold(16.0)).color(p.text));
-                badge(ui, &tr!("{rows} × {cols}", rows = group(table.rows()), cols = group(table.cols())));
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.label(RichText::new(tr!("First row as header")).color(p.muted));
-                    switch(ui, &mut app.first_row_header, tr!("First row as header"));
+            // The switch first, from the right; the table's name takes what is left and is cut there.
+            ui.allocate_ui_with_layout(vec2(ui.available_width(), 30.0), Layout::right_to_left(Align::Center), |ui| {
+                ui.label(RichText::new(tr!("First row as header")).color(p.muted));
+                switch(ui, &mut app.first_row_header, tr!("First row as header"));
+                ui.add_space(12.0);
+                ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                    let size = tr!("{rows} × {cols}", rows = group(table.rows()), cols = group(table.cols()));
+                    let name = RichText::new(&table.name).font(semibold(16.0)).color(p.text);
+                    // The badge keeps its room: the name gives way.
+                    let badge_room =
+                        ui.painter().layout_no_wrap(size.clone(), egui::FontId::proportional(11.0), p.muted).size().x
+                            + 24.0;
+                    ui.scope(|ui| {
+                        ui.set_max_width((ui.available_width() - badge_room).max(40.0));
+                        ui.add(egui::Label::new(name).truncate());
+                    });
+                    badge(ui, &size);
                 });
             });
             ui.add_space(6.0);
