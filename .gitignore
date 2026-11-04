@@ -1,6 +1,3 @@
-.venv
-build
-dist
-
-*.DS_Store
-.env*
+/target
+# Design snapshots: drawn locally or by CI (see crates/ui/tests/gallery.rs), not committed yet.
+/crates/ui/tests/snapshots/

@@ -1,0 +1,67 @@
+[workspace]
+resolver = "3"
+members = ["apps/*", "crates/*", "xtask"]
+default-members = ["apps/splicr"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT"
+authors = ["Brad Moyetones"]
+repository = "https://github.com/BradMoyetones/splicr"
+
+[workspace.dependencies]
+splicr-core = { path = "crates/core" }
+splicr-engine = { path = "crates/engine" }
+splicr-io = { path = "crates/io" }
+splicr-platform = { path = "crates/platform" }
+splicr-ui = { path = "crates/ui" }
+splicr-update = { path = "crates/update" }
+# Reads xlsx, xlsm, xlsb, xls and ods. Pure Rust, MIT.
+calamine = { version = "0.38", default-features = false }
+eframe = { version = "0.37", default-features = false, features = ["accesskit", "default_fonts", "glow"] }
+egui_extras = { version = "0.37", default-features = false, features = ["svg"] }
+log = "0.4"
+pollster = "0.4"
+raw-window-handle = "0.6"
+# The file dialogs, as ArtCraft's apps use them. No default features: those are Linux's.
+rfd = { version = "0.17", default-features = false }
+# Writes xlsx. Pure Rust, MIT OR Apache-2.0.
+# `constant_memory` writes rows straight to disk, so big exports needn't fit in memory twice.
+rust_xlsxwriter = { version = "0.102", default-features = false, features = ["constant_memory"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+sys-locale = "0.3"
+toml = "1"
+winit = { version = "0.30", default-features = false }
+winresource = "0.1"
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_Controls",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+# Files inside .zip archives: deflate only, as GridCraft builds it.
+zip = { version = "9", default-features = false, features = ["deflate"] }
+
+[workspace.lints.rust]
+# `deny`, not `forbid`: Windows' window module in `crates/platform` is the one place allowed to opt out.
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+
+# Reading big files in a debug build would crawl: the parsers are optimized even there.
+[profile.dev.package."*"]
+opt-level = 2

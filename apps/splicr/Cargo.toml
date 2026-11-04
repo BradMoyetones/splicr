@@ -1,0 +1,38 @@
+[package]
+name = "splicr"
+description = "Open-source app to view, combine, relate, edit and export spreadsheets and CSV files, written in Rust"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+splicr-core = { workspace = true }
+splicr-engine = { workspace = true }
+splicr-platform = { workspace = true }
+splicr-ui = { workspace = true }
+splicr-update = { workspace = true }
+eframe = { workspace = true }
+log = { workspace = true }
+pollster = { workspace = true }
+raw-window-handle = { workspace = true }
+rfd = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }
+
+# On Linux winit needs X11 or Wayland. Both load their libraries when Splicr starts (winit's own
+# default), so building needs none installed; winit is listed only to turn that on, and to draw the
+# window's frame where the compositor draws none (GNOME), as Remapr does. The file dialogs go
+# through the desktop portal.
+[target.'cfg(target_os = "linux")'.dependencies]
+eframe = { workspace = true, features = ["wayland", "x11"] }
+rfd = { workspace = true, features = ["xdg-portal", "wayland"] }
+winit = { workspace = true, features = ["wayland-dlopen", "wayland-csd-adwaita-notitle"] }
+
+[build-dependencies]
+winresource = { workspace = true }

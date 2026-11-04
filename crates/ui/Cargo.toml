@@ -1,0 +1,22 @@
+[package]
+name = "splicr-ui"
+description = "Splicr's design system for egui: light/dark tokens, Inter, Lucide icons, widgets and the data grid"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# Screenshot tests of the design system: `cargo test -p splicr-ui --features snapshots`. They draw
+# with wgpu, so they stay out of the default build.
+snapshots = ["dep:egui_kittest"]
+
+[dependencies]
+eframe = { workspace = true }
+egui_extras = { workspace = true }
+egui_kittest = { version = "0.37", features = ["snapshot", "wgpu"], optional = true }

@@ -1,0 +1,157 @@
+# Español (es) catalog for Splicr, in the format of ArtCraft's craft-i18n (as Remapr's).
+# Columns, separated by a TAB:  context <TAB> English source text <TAB> translation
+#   context  empty for interface text; `@plural` for counts: English `one|other`, then this
+#            language's forms, `|`-separated.
+#   `{name}` placeholders must appear in both columns. A missing entry shows in English.
+#   Lines starting with # and blank lines are ignored.
+
+	Splicr was updated to version {version}.	Splicr se actualizó a la versión {version}.
+	Couldn't save the settings: {error}	No se pudo guardar la configuración: {error}
+	Couldn't open {file}: {error}	No se pudo abrir {file}: {error}
+	Export cancelled. Files finished before stay: {count}.	Exportación cancelada. Los archivos ya terminados se quedan: {count}.
+	Home	Inicio
+	Data	Datos
+	Combine	Combinar
+	Expand the sidebar	Expandir la barra lateral
+	Collapse the sidebar	Contraer la barra lateral
+	Settings	Ajustes
+	Open your data	Abre tus datos
+	Spreadsheets and CSV files, one or many at once	Hojas de cálculo y archivos CSV, uno o muchos a la vez
+	The tables you have open	Las tablas que tienes abiertas
+	Join tables into the files you need	Une tablas en los archivos que necesitas
+	How Splicr looks and updates	Cómo se ve y se actualiza Splicr
+	Back	Atrás
+	Open files	Abrir archivos
+	Close notice	Cerrar aviso
+	Show in folder	Mostrar en la carpeta
+	Reading {file} ({index} of {count})…	Leyendo {file} ({index} de {count})…
+	Exporting… {percent}%	Exportando… {percent} %
+	No files open	Ningún archivo abierto
+	These files are already in the folder:	Estos archivos ya están en la carpeta:
+	and {count} more	y {count} más
+	Replace	Reemplazar
+	Cancel	Cancelar
+	it is bigger than 512 MB, the most Splicr reads.	pesa más de 512 MB, el máximo que lee Splicr.
+	it isn't a spreadsheet Splicr can read, or it is damaged ({detail}).	no es una hoja de cálculo que Splicr pueda leer, o está dañada ({detail}).
+	the archive holds no CSV or spreadsheet files.	el archivo comprimido no contiene archivos CSV ni hojas de cálculo.
+	“{sheet}” has more rows than a spreadsheet holds (1 048 576). Export it as CSV.	«{sheet}» tiene más filas de las que caben en una hoja (1 048 576). Expórtala como CSV.
+	“{sheet}” has more columns than a spreadsheet holds (16 384).	«{sheet}» tiene más columnas de las que caben en una hoja (16 384).
+	cancelled.	cancelado.
+	{file}: only the first {rows} rows of “{table}” were read.	{file}: solo se leyeron las primeras {rows} filas de «{table}».
+	{file}: only the first {columns} columns of “{table}” were read.	{file}: solo se leyeron las primeras {columns} columnas de «{table}».
+	{file}: the sheet “{sheet}” couldn't be read ({error}).	{file}: no se pudo leer la hoja «{sheet}» ({error}).
+	{file}: {count} files inside weren't read, they aren't tables: {names}	{file}: no se leyeron {count} archivos de dentro, no son tablas: {names}
+@plural	{n} table open|{n} tables open	{n} tabla abierta|{n} tablas abiertas
+@plural	Replace {n} file?|Replace {n} files?	¿Reemplazar {n} archivo?|¿Reemplazar {n} archivos?
+	Couldn't read the settings: {error}	No se pudo leer la configuración: {error}
+	The settings are from a newer Splicr. A copy was kept as {file}	La configuración es de un Splicr más nuevo. Se guardó una copia como {file}
+	The settings were damaged. A copy was saved as {file}	La configuración estaba dañada. Se guardó una copia como {file}
+	Spreadsheets and CSV	Hojas de cálculo y CSV
+	Where to save	Dónde guardar
+	Check for updates	Buscar actualizaciones
+	You have the latest version (v{version}).	Tienes la última versión (v{version}).
+	Couldn't check for updates. {error}	No se pudo buscar actualizaciones. {error}
+	New version available: v{version}	Nueva versión disponible: v{version}
+	You have v{version}. It installs itself and Splicr restarts.	Tienes la v{version}. Se instala sola y Splicr se reinicia.
+	You have v{version}. Download it and drag Splicr to Applications.	Tienes la v{version}. Descárgala y arrastra Splicr a Aplicaciones.
+	You have v{version}. Download it from its page.	Tienes la v{version}. Descárgala desde su página.
+	What's new	Novedades
+	Download	Descargar
+	Update and restart	Actualizar y reiniciar
+	Later	Más tarde
+	Downloading v{version}…	Descargando la v{version}…
+	Installing v{version}. Splicr will restart by itself.	Instalando la v{version}. Splicr se reiniciará solo.
+	Couldn't update. {error}	No se pudo actualizar. {error}
+	Retry	Reintentar
+	Close	Cerrar
+	No connection.	Sin conexión.
+	No connection ({detail}).	Sin conexión ({detail}).
+	GitHub answered something unexpected ({detail}).	GitHub respondió algo inesperado ({detail}).
+	The published SHA-256 can't be read.	No se puede leer el SHA-256 publicado.
+	The download doesn't match its published SHA-256; it was discarded.	La descarga no coincide con su SHA-256 publicado; se descartó.
+	A file couldn't be saved ({detail}).	No se pudo guardar un archivo ({detail}).
+	The update was cancelled.	Se canceló la actualización.
+	Another installation is running. Wait for it to finish and try again.	Hay otra instalación en curso. Espera a que termine y vuelve a intentarlo.
+	Windows Installer stopped with error {code}.	Windows Installer se detuvo con el error {code}.
+	Windows Installer couldn't start or was interrupted.	Windows Installer no pudo iniciarse o se interrumpió.
+	Nothing to combine yet	Aún no hay nada que combinar
+	Open two or more CSV or spreadsheet files, then come back here.	Abre dos o más archivos CSV u hojas de cálculo y vuelve aquí.
+	1. How to combine them	1. Cómo combinarlas
+	One workbook	Un libro
+	A single xlsx file, with one sheet for each table.	Un solo archivo xlsx, con una hoja por cada tabla.
+	A file each	Un archivo por tabla
+	Each table in a file of its own, xlsx or CSV.	Cada tabla en su propio archivo, xlsx o CSV.
+	One stacked table	Una sola tabla
+	Every table's rows one after another, columns matched by their header.	Las filas de todas las tablas una tras otra, con las columnas unidas por su encabezado.
+	2. Tables	2. Tablas
+	{taken} of {total}	{taken} de {total}
+	Take none	Quitar todas
+	Take all	Tomar todas
+	The name is the sheet's name in the workbook.	El nombre es el de la hoja dentro del libro.
+	The name is the file's name.	El nombre es el del archivo.
+	With the column of origin on, the name fills it for that table's rows.	Con la columna de origen activada, el nombre la llena en las filas de esa tabla.
+	from {file} · {rows} rows	de {file} · {rows} filas
+	Show this table	Ver esta tabla
+	3. Where to save	3. Dónde guardar
+	Folder	Carpeta
+	None chosen yet	Aún no hay ninguna
+	Choose…	Elegir…
+	File name	Nombre del archivo
+	Format	Formato
+	Excel (xlsx)	Excel (xlsx)
+	CSV (UTF-8)	CSV (UTF-8)
+	Origin	Origen
+	Add a column with each row's table	Añadir una columna con la tabla de cada fila
+	{file}, with {sheets}: {names}	{file}, con {sheets}: {names}
+	{file}, with the rows of {tables}	{file}, con las filas de {tables}
+	{files}: {names}	{files}: {names}
+	It will write	Se escribirá
+	Choose the folder where the files go.	Elige la carpeta donde irán los archivos.
+	Take at least one table.	Toma al menos una tabla.
+	Export	Exportar
+	Writing {file}…	Escribiendo {file}…
+	{done} of {total} rows	{done} de {total} filas
+	Open	Abrir
+	Couldn't export: {error}	No se pudo exportar: {error}
+	The export stopped after {count} files: {error}	La exportación se detuvo tras {count} archivos: {error}
+@plural	{n} sheet|{n} sheets	{n} hoja|{n} hojas
+@plural	{n} table|{n} tables	{n} tabla|{n} tablas
+@plural	{n} file|{n} files	{n} archivo|{n} archivos
+@plural	{n} file written|{n} files written	{n} archivo escrito|{n} archivos escritos
+	No tables open	No hay tablas abiertas
+	Open CSV or spreadsheet files and their tables show up here.	Abre archivos CSV u hojas de cálculo y sus tablas aparecerán aquí.
+	{rows} × {cols}	{rows} × {cols}
+	First row as header	Primera fila como encabezado
+	Close this file	Cerrar este archivo
+	{rows} rows	{rows} filas
+	Drop files here, or click to choose them	Suelta archivos aquí o haz clic para elegirlos
+	CSV, Excel (xlsx, xlsm, xlsb, xls), OpenDocument (ods) and zip archives of them	CSV, Excel (xlsx, xlsm, xlsb, xls), OpenDocument (ods) y archivos zip que los contengan
+	Recent files	Archivos recientes
+	The files you open will be listed here.	Aquí aparecerán los archivos que abras.
+	What you can do	Qué puedes hacer
+	Look through your data	Revisar tus datos
+	Every sheet in a grid that stays fast with a million rows.	Cada hoja en una cuadrícula que sigue siendo rápida con un millón de filas.
+	One workbook, one sheet each	Un libro, una hoja por tabla
+	Many CSV and sheets gathered in a single Excel file.	Muchos CSV y hojas reunidos en un solo archivo de Excel.
+	Stack them into one table	Apilarlas en una sola tabla
+	Rows of every file one after another, columns matched by name.	Las filas de cada archivo una tras otra, con las columnas unidas por nombre.
+	Or one file each	O un archivo por tabla
+	Each table as its own xlsx or CSV, named as you like.	Cada tabla como su propio xlsx o CSV, con el nombre que quieras.
+	Appearance	Apariencia
+	Like the system	Como el sistema
+	Light or dark, as the system is.	Claro u oscuro, según el sistema.
+	Light	Claro
+	Always light.	Siempre claro.
+	Dark	Oscuro
+	Always dark.	Siempre oscuro.
+	Compact sidebar	Barra lateral compacta
+	Compact sidebar: icons only	Barra lateral compacta: solo iconos
+	Updates	Actualizaciones
+	Splicr {version}	Splicr {version}
+	Splicr looks for new versions by itself, every few hours.	Splicr busca versiones nuevas por su cuenta, cada pocas horas.
+	This copy was built from source: it doesn't update itself.	Esta copia se compiló desde el código: no se actualiza sola.
+	About	Acerca de
+	Open source, MIT licence. Written in Rust, from scratch, in the style of Remapr.	Código abierto, licencia MIT. Escrito en Rust desde cero, con el estilo de Remapr.
+	Source code	Código fuente
+	Settings and logs folder	Carpeta de ajustes y registros
+	{format} in {archive}	{format} en {archive}

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata (software centres), after ArtCraft's craft-launcher, as Remapr's. Template:
+     cargo xtask dist substitutes @VERSION@ and @DATE@ from Cargo.toml and the build date. -->
+<component type="desktop-application">
+  <id>io.github.bradmoyetones.splicr</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Splicr</name>
+  <summary>View, combine and export spreadsheets and CSV files</summary>
+  <developer id="io.github.bradmoyetones">
+    <name>Brad Moyetones</name>
+  </developer>
+  <description>
+    <p>
+      Open CSV files, Excel workbooks and OpenDocument spreadsheets, one or many at once, even from
+      inside zip archives. Look through them in a fast grid, then combine them the way you need.
+    </p>
+    <ul>
+      <li>One workbook with a sheet for each table</li>
+      <li>One stacked table, columns matched by their header</li>
+      <li>A file for each table, as xlsx or CSV</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.bradmoyetones.splicr.desktop</launchable>
+  <icon type="stock">io.github.bradmoyetones.splicr</icon>
+  <url type="homepage">https://github.com/BradMoyetones/splicr</url>
+  <url type="bugtracker">https://github.com/BradMoyetones/splicr/issues</url>
+  <categories>
+    <category>Office</category>
+    <category>Spreadsheet</category>
+  </categories>
+  <provides>
+    <binary>splicr</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="@VERSION@" date="@DATE@"/>
+  </releases>
+</component>

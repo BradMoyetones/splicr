@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splicr's Windows installer, after Remapr's. Built by `cargo xtask dist`, which passes Version
+     and the paths of the executable, icon, wizard art and licence. Per user, into
+     %LOCALAPPDATA%\Programs\Splicr: installing and updating ask for no administrator rights, so
+     the updater's silent install needs no UAC prompt. The wizard is WiX's own, in Spanish
+     (`-culture es-ES`). -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <!-- Never change the UpgradeCode: it is how a new version finds and replaces the old one. -->
+  <Package Name="Splicr" Manufacturer="Brad Moyetones" Version="$(var.Version)"
+           UpgradeCode="970E3320-8425-44AA-B837-765CC37872B9" Scope="perUser" Language="3082" Codepage="1252">
+    <SummaryInformation Description="Splicr, visor y combinador de hojas de cálculo" />
+    <!-- Same-version upgrades let a rebuilt installer replace an installed copy of the same version. -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="Ya hay instalada una versión más nueva de Splicr." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <!-- MSI caches the icon under its Id; shortcuts need an .exe-like Id. -->
+    <Icon Id="SplicrIcon.exe" SourceFile="$(var.IconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="SplicrIcon.exe" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/BradMoyetones/splicr" />
+
+    <!-- The app finds itself installed by this folder (crates/platform/src/windows.rs). -->
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="Splicr" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <!-- Files in a user's profile take a registry value under HKCU as their key path, and remove
+         their folders on uninstall (ICE38, ICE64). `Programs` is only removed when empty. A file
+         with a registry key path can't have a generated component GUID (WIX0230): these are fixed,
+         and never change, as the UpgradeCode. -->
+    <Feature Id="Main" Title="Splicr">
+      <Component Id="App" Directory="INSTALLFOLDER" Guid="15943BD7-C5AE-4FE1-9C89-B866DE195B38">
+        <File Id="SplicrExe" Name="splicr.exe" Source="$(var.ExePath)" />
+        <RegistryValue Root="HKCU" Key="Software\Splicr" Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+        <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
+        <RemoveFolder Id="RemoveProgramsFolder" Directory="ProgramsFolder" On="uninstall" />
+      </Component>
+      <Component Id="StartMenu" Directory="ProgramMenuFolder" Guid="4CBABADF-6E30-4FAD-A7B5-1AB1EAED995C">
+        <Shortcut Id="StartMenuShortcut" Name="Splicr" Target="[#SplicrExe]" WorkingDirectory="INSTALLFOLDER" Icon="SplicrIcon.exe" />
+        <RegistryValue Root="HKCU" Key="Software\Splicr" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </Feature>
+
+    <!-- The wizard: welcome with the licence, progress, finish; with Splicr's own art. -->
+    <ui:WixUI Id="WixUI_Minimal" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.BannerBmp)" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.DialogBmp)" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="Splicr ya está abierto. Lo encontrarás en el menú Inicio." />
+
+    <!-- A running Splicr holds splicr.exe open: end it before files are replaced. The updater
+         quits Splicr itself; this covers an installer run by hand while it is open. -->
+    <CustomAction Id="EndSplicr" Directory="System64Folder"
+                  ExeCommand="&quot;[System64Folder]taskkill.exe&quot; /F /IM splicr.exe"
+                  Execute="deferred" Return="ignore" />
+    <!-- Installing (and updating) ends with Splicr open. -->
+    <CustomAction Id="StartSplicr" FileRef="SplicrExe" ExeCommand="" Return="asyncNoWait" />
+    <InstallExecuteSequence>
+      <Custom Action="EndSplicr" After="InstallInitialize" />
+      <Custom Action="StartSplicr" After="InstallFinalize" Condition="NOT REMOVE~=&quot;ALL&quot;" />
+    </InstallExecuteSequence>
+  </Package>
+</Wix>
