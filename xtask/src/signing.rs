@@ -109,6 +109,8 @@ mod tests {
         assert_eq!(unhex("zz"), None);
     }
 
+    /// keygen reads /dev/urandom: macOS and Linux only.
+    #[cfg(unix)]
     #[test]
     fn keygen_never_overwrites_a_key() {
         let dir = std::env::temp_dir().join(format!("splicr-keygen-{}", std::process::id()));
@@ -116,12 +118,9 @@ mod tests {
         keygen(&dir).unwrap();
         let private = std::fs::read_to_string(dir.join("splicr-signing.key")).unwrap();
         assert!(unhex(&private).is_some());
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mode = std::fs::metadata(dir.join("splicr-signing.key")).unwrap().permissions().mode();
-            assert_eq!(mode & 0o777, 0o600);
-        }
+        use std::os::unix::fs::PermissionsExt;
+        let mode = std::fs::metadata(dir.join("splicr-signing.key")).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o600);
         assert!(keygen(&dir).is_err());
         let _ = std::fs::remove_dir_all(dir);
     }

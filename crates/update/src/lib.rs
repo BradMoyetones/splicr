@@ -41,7 +41,7 @@ pub const REPO: &str = "BradMoyetones/splicr";
 /// The project's ed25519 public key, in hex: packages are signed with its private half in the
 /// release workflow (`cargo xtask sign`, secret `SPLICR_SIGNING_KEY`). Never change it without a
 /// release that carries both: copies out there only accept packages signed with the key they have.
-pub const PUBLIC_KEY: &str = "";
+pub const PUBLIC_KEY: &str = "66ab00aa9da39a987f3e199fa729f186dba90592c7c93dd8bb5974715b6d5867";
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
