@@ -584,6 +584,10 @@ impl eframe::App for App {
             .frame(Frame::new().fill(p.bg).inner_margin(Margin { left: 24, right: 24, top: 14, bottom: 12 }))
             .show(ui, |ui| {
                 self.notices(ui);
+                // A new version is offered on every screen; Settings shows it in its Updates section.
+                if self.router.current() != Route::Settings {
+                    self.updates.banner(ui);
+                }
                 match self.router.current() {
                     Route::Home => views::home::show(self, ui),
                     Route::Data(key) => views::data::show(self, ui, key),
