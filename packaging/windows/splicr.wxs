@@ -27,15 +27,17 @@
     <StandardDirectory Id="ProgramMenuFolder" />
 
     <!-- Files in a user's profile take a registry value under HKCU as their key path, and remove
-         their folders on uninstall (ICE38, ICE64). `Programs` is only removed when empty. -->
+         their folders on uninstall (ICE38, ICE64). `Programs` is only removed when empty. A file
+         with a registry key path can't have a generated component GUID (WIX0230): these are fixed,
+         and never change, as the UpgradeCode. -->
     <Feature Id="Main" Title="Splicr">
-      <Component Id="App" Directory="INSTALLFOLDER">
+      <Component Id="App" Directory="INSTALLFOLDER" Guid="15943BD7-C5AE-4FE1-9C89-B866DE195B38">
         <File Id="SplicrExe" Name="splicr.exe" Source="$(var.ExePath)" />
         <RegistryValue Root="HKCU" Key="Software\Splicr" Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
         <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
         <RemoveFolder Id="RemoveProgramsFolder" Directory="ProgramsFolder" On="uninstall" />
       </Component>
-      <Component Id="StartMenu" Directory="ProgramMenuFolder">
+      <Component Id="StartMenu" Directory="ProgramMenuFolder" Guid="4CBABADF-6E30-4FAD-A7B5-1AB1EAED995C">
         <Shortcut Id="StartMenuShortcut" Name="Splicr" Target="[#SplicrExe]" WorkingDirectory="INSTALLFOLDER" Icon="SplicrIcon.exe" />
         <RegistryValue Root="HKCU" Key="Software\Splicr" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
       </Component>
