@@ -15,7 +15,7 @@ jobs:
         os: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
@@ -31,7 +31,7 @@ jobs:
         if: runner.os == 'Windows'
         run: cargo xtask dist
       - if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: splicr-installer
           path: target/dist/
@@ -41,7 +41,7 @@ jobs:
           rustup target add aarch64-apple-darwin x86_64-apple-darwin
           cargo xtask dist
       - if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: splicr-dmg
           path: target/dist/
@@ -49,7 +49,7 @@ jobs:
         if: runner.os == 'Linux'
         run: cargo xtask dist
       - if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: splicr-linux
           path: target/dist/
@@ -60,14 +60,14 @@ jobs:
     # run's `design-snapshots` artifact, for reviewing a change of look.
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test -p splicr-ui --features snapshots --test gallery
         env:
           UPDATE_SNAPSHOTS: "1"
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: design-snapshots
           path: crates/ui/tests/snapshots/
