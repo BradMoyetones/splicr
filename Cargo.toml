@@ -21,11 +21,11 @@ splicr-update = { path = "crates/update" }
 # Reads xlsx, xlsm, xlsb, xls and ods. Pure Rust, MIT.
 calamine = { version = "0.38", default-features = false }
 # Checking the packages' signatures (the updater) and making them (`cargo xtask sign`).
-ed25519-dalek = "2.2"
+ed25519-dalek = "3.0"
 eframe = { version = "0.37", default-features = false, features = ["accesskit", "default_fonts", "glow"] }
 egui_extras = { version = "0.37", default-features = false, features = ["svg"] }
 log = "0.4"
-pollster = "0.4"
+pollster = "1.0"
 raw-window-handle = "0.6"
 # The file dialogs, as ArtCraft's apps use them. No default features: those are Linux's.
 rfd = { version = "0.17", default-features = false }
@@ -34,7 +34,7 @@ rfd = { version = "0.17", default-features = false }
 rust_xlsxwriter = { version = "0.102", default-features = false, features = ["constant_memory"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sha2 = "0.10"
+sha2 = "0.11"
 sys-locale = "0.3"
 toml = "1"
 winit = { version = "0.30", default-features = false }
