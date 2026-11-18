@@ -28,7 +28,7 @@ log = "0.4"
 pollster = "1.0"
 raw-window-handle = "0.6"
 # The file dialogs, as ArtCraft's apps use them. No default features: those are Linux's.
-rfd = { version = "0.17", default-features = false }
+rfd = { version = "0.18", default-features = false }
 # Writes xlsx. Pure Rust, MIT OR Apache-2.0.
 # `constant_memory` writes rows straight to disk, so big exports needn't fit in memory twice.
 rust_xlsxwriter = { version = "0.102", default-features = false, features = ["constant_memory"] }
