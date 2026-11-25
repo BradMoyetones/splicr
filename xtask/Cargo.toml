@@ -16,6 +16,6 @@ workspace = true
 splicr-update = { workspace = true }
 ed25519-dalek = { workspace = true }
 ico = "0.6"
-resvg = "0.49"
+resvg = "0.50"
 serde_json = { workspace = true }
 sha2 = { workspace = true }
